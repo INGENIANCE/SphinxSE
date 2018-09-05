@@ -1,0 +1,61 @@
+---
+# tasks file for sphinxse
+- name : Create SphinxSE top folder
+  become : yes
+  file :
+    path : "{{ sphinxse_path_volumes }}"
+    state : directory
+    owner : "{{ sphinxse_ansible_user_id }}"
+    group : adm
+    mode : "u=rwx,g=rwx,o=rwx"
+
+- name : Create SphinxSE volumes folders
+  become : yes
+  file :
+    path : "{{ sphinxse_path_volumes }}/{{ item }}"
+    state : directory
+    owner : "{{ sphinxse_ansible_user_id }}"
+    group : adm
+    mode : "u=rwx,g=rwx,o=rwx"
+  loop : ["config","data","log","run"]
+
+- name : Install docker
+  pip :
+    name : docker
+    state : present
+    version : 3.2.1
+
+- name : Log into private registry and force re-authorization
+  docker_login :
+    registry : "{{ sphinxse_docker_registry_path }}"
+    username : "{{ sphinxse_docker_registry_username }}"
+    password : "{{ sphinxse_docker_registry_password }}"
+    reauthorize : yes
+
+- name : Pull SphinxSE image
+  docker_image :
+    name : "{{ sphinxse_docker_repo_path }}/sphinx-image"
+    tag : latest
+    pull : yes
+
+- name : Move sphinx Config
+  become : yes
+  command: "mv {{ sphinxse_path_config }}sphinx.conf {{ sphinxse_path_volumes }}config/sphinx.conf"
+
+- name : Run SphinxSE container
+  docker_container :
+    name : sphinxse-service
+    image : "{{ sphinxse_docker_repo_path }}/sphinx-image"
+    command : ./indexall.sh
+    state : started
+    restart : yes
+    detach : yes
+    network_mode : host
+    ports :
+      - "9312:9312"
+      - "9306:9306"
+    volumes :
+      - "{{ sphinxse_path_volumes }}/config:/etc/sphinxsearch"
+      - "{{ sphinxse_path_volumes }}/data:/var/lib/sphinxsearch/data"
+      - "{{ sphinxse_path_volumes }}/log:/var/log/sphinxsearch"
+      - "{{ sphinxse_path_volumes }}/run:/var/run/sphinxsearch"

@@ -1,0 +1,11 @@
+---
+# defaults file for sphinxse
+
+# Task variables
+sphinxse_ansible_user_id: ""
+sphinxse_docker_registry_path : ""
+sphinxse_docker_repo_path : ""
+sphinxse_path_config : ""
+sphinxse_path_volumes : ""
+sphinxse_docker_registry_username : ""
+sphinxse_docker_registry_password_vault : ""
